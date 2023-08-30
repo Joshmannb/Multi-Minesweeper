@@ -1,6 +1,3 @@
-/* Copyright (c) 2007-2016 MIT 6.005 course staff, all rights reserved.
- * Redistribution of original or derived work requires permission of course staff.
- */
 package minesweeper.server;
 
 import java.io.*;
@@ -13,10 +10,6 @@ import minesweeper.Board;
  * Multiplayer Minesweeper server.
  */
 public class MinesweeperServer {
-
-    // System thread safety argument
-    //   TODO Problem 5
-
     /** Default server port. */
     private static final int DEFAULT_PORT = 4444;
     /** Maximum port number as defined by ServerSocket. */
@@ -28,8 +21,7 @@ public class MinesweeperServer {
     private final ServerSocket serverSocket;
     /** True if the server should *not* disconnect a client after a BOOM message. */
     private final boolean debug;
-
-    // TODO: Abstraction function, rep invariant, rep exposure
+    private final Board board;
 
     /**
      * Make a MinesweeperServer that listens for connections on port.
@@ -38,8 +30,9 @@ public class MinesweeperServer {
      * @param debug debug mode flag
      * @throws IOException if an error occurs opening the server socket
      */
-    public MinesweeperServer(int port, boolean debug) throws IOException {
+    public MinesweeperServer(int port, Board board, boolean debug) throws IOException {
         serverSocket = new ServerSocket(port);
+        this.board = board;
         this.debug = debug;
     }
 
@@ -56,7 +49,7 @@ public class MinesweeperServer {
             Socket socket = serverSocket.accept();
 
             // handle the client
-            new Thread(new MinesweeperHandler(socket)).start();
+            new Thread(new MinesweeperHandler(socket, this.board, this.debug)).start();
         }
     }
 
@@ -175,10 +168,15 @@ public class MinesweeperServer {
      * @throws IOException if a network error occurs
      */
     public static void runMinesweeperServer(boolean debug, Optional<File> file, int sizeX, int sizeY, int port) throws IOException {
+        Board board;
+
+        if (file.isPresent()) {
+            board = new Board(file.get());
+        } else {
+            board = new Board(sizeX, sizeY);
+        }
         
-        // TODO: Continue implementation here in problem 4
-        
-        MinesweeperServer server = new MinesweeperServer(port, debug);
+        MinesweeperServer server = new MinesweeperServer(port, board, debug);
         server.serve();
     }
 }
